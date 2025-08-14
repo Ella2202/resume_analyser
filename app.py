@@ -95,23 +95,41 @@ def analyze_resume(file, job_description):
     except Exception as e:
         return f"❌ Analysis failed: {e}"
 
-# Build Gradio UI
-with gr.Blocks() as demo:
-    gr.Markdown("# 📄 AI Resume Analyzer")
-    gr.Markdown("Upload your resume and (optionally) add a job description for an AI-powered analysis using **Google Gemini AI**.")
+st.set_page_config(page_title="Resume Analyzer", layout="wide")
+# Title
+st.title("AI Resume Analyzer")
+st.write("Analyze your resume and match it with job descriptions using Google Gemini AI.")
 
-    with gr.Row():
-        resume_file = gr.File(label="Upload Resume (PDF)", file_types=[".pdf"])
-        job_desc = gr.Textbox(label="Job Description (Optional)", placeholder="Paste job description here...", lines=8)
+col1 , col2 = st.columns(2)
+with col1:
+    uploaded_file = st.file_uploader("Upload your resume (PDF)", type=["pdf"])
+with col2:
+    job_description = st.text_area("Enter Job Description:", placeholder="Paste the job description here...")
 
-    analyze_btn = gr.Button("Analyze Resume")
-    output_text = gr.Textbox(label="AI Analysis", lines=20)
+if uploaded_file is not None:
+    st.success("Resume uploaded successfully!")
+else:
+    st.warning("Please upload a resume in PDF format.")
 
-    analyze_btn.click(fn=analyze_resume, inputs=[resume_file, job_desc], outputs=output_text)
 
-    gr.Markdown("---")
-    gr.Markdown("Powered by **Gradio** & **Google Gemini AI** | Adapted for Hugging Face Spaces 🚀")
+st.markdown("<div style= 'padding-top: 10px;'></div>", unsafe_allow_html=True)
+if uploaded_file:
+    # Save uploaded file locally for processing
+    with open("uploaded_resume.pdf", "wb") as f:
+        f.write(uploaded_file.getbuffer())
+    # Extract text from PDF
+    resume_text = extract_text_from_pdf("uploaded_resume.pdf")
 
-# Run locally (for testing)
-if __name__ == "__main__":
-    demo.launch()
+    if st.button("Analyze Resume"):
+        with st.spinner("Analyzing resume..."):
+            try:
+                # Analyze resume
+                analysis = analyze_resume(resume_text, job_description)
+                st.success("Analysis complete!")
+                st.write(analysis)
+            except Exception as e:
+                st.error(f"Analysis failed: {e}")
+
+#Footer
+st.markdown("---")
+st.markdown("""<p style= 'text-align: center;' >Powered by <b>Streamlit</b> and <b>Google Gemini AI</b> | Developed by <a href="https://www.linkedin.com/in/dutta-sujoy/"  target="_blank" style='text-decoration: none; color: #FFFFFF'><b>Sujoy Dutta</b></a></p>""", unsafe_allow_html=True)
