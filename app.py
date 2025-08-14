@@ -5,7 +5,7 @@ import google.generativeai as genai
 from pdf2image import convert_from_path
 import pytesseract
 import pdfplumber
-
+import streamlit as st
 
 # Load environment variables (GOOGLE_API_KEY must be set in Hugging Face Secrets)
 load_dotenv()
