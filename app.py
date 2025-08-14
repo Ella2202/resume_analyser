@@ -11,7 +11,10 @@ import gradio as gr
 load_dotenv()
 
 # Configure Google Gemini AI
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+genai.configure(
+    api_key=os.getenv("GOOGLE_API_KEY") or st.secrets["GOOGLE_API_KEY"]
+)
+
 
 # Function to extract text from PDF
 def extract_text_from_pdf(pdf_path):
