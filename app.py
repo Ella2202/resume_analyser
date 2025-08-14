@@ -48,32 +48,15 @@ def extract_text_from_pdf(pdf_path):
     return text.strip()
 
 # Function to analyze resume using Gemini
-def analyze_resume(file, job_description):
-    if file is None:
-        return "❌ Please upload a PDF resume."
-
-    # Save uploaded file locally
-    pdf_path = "uploaded_resume.pdf"
-    with open(pdf_path, "wb") as f:
-        f.write(file.read())
-
-    # Extract text
-    resume_text = extract_text_from_pdf(pdf_path)
+def analyze_resume(resume_text, job_description=None):
     if not resume_text:
-        return "⚠ No text found in the uploaded resume."
-
+        return {"error": "Resume text is required for analysis."}
+    
     model = genai.GenerativeModel("gemini-1.5-flash")
-
+    
     base_prompt = f"""
-    You are an experienced HR with technical expertise in roles such as Data Science, Data Analyst, DevOps, 
-    Machine Learning Engineer, Prompt Engineer, AI Engineer, Full Stack Web Developer, Big Data Engineer, 
-    Marketing Analyst, Human Resource Manager, or Software Developer.
-    Review the provided resume and share your evaluation. 
-    Mention:
-    1. Skills the candidate already has.
-    2. Skills to improve.
-    3. Relevant courses to take.
-    4. Strengths and weaknesses.
+    You are an experienced HR with Technical Experience in the field of any one job role from Data Science, Data Analyst, DevOPS, Machine Learning Engineer, Prompt Engineer, AI Engineer, Full Stack Web Development, Big Data Engineering, Marketing Analyst, Human Resource Manager, Software Developer your task is to review the provided resume.
+    Please share your professional evaluation on whether the candidate's profile aligns with the role.ALso mention Skills he already have and siggest some skills to imorve his resume , alos suggest some course he might take to improve the skills.Highlight the strengths and weaknesses.
 
     Resume:
     {resume_text}
@@ -85,15 +68,21 @@ def analyze_resume(file, job_description):
         
         Job Description:
         {job_description}
-
-        Highlight strengths and weaknesses of the applicant in relation to the job requirements.
+        
+        Highlight the strengths and weaknesses of the applicant in relation to the specified job requirements.
         """
 
-    try:
-        response = model.generate_content(base_prompt)
-        return response.text.strip()
-    except Exception as e:
-        return f"❌ Analysis failed: {e}"
+    response = model.generate_content(base_prompt)
+
+    analysis = response.text.strip()
+    return analysis
+
+
+
+
+
+
+
 
 st.set_page_config(page_title="Resume Analyzer", layout="wide")
 # Title
