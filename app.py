@@ -12,9 +12,9 @@ load_dotenv()
 
 # Configure Google Gemini AI
 genai.configure(
-    api_key=os.getenv("GOOGLE_API_KEY") or st.secrets["GOOGLE_API_KEY"]
+    api_key=os.getenv("GOOGLE_API_Key") or st.secrets["GOOGLE_API_Key"]
 )
-api_key = os.getenv("GOOGLE_API_KEY") or st.secrets.get("GOOGLE_API_Key")
+api_key = os.getenv("GOOGLE_API_Key") or st.secrets.get("GOOGLE_API_Key")
 if not api_key:
     raise ValueError("❌ GOOGLE_API_KEY not found in environment variables or Streamlit secrets")
 
