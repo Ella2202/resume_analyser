@@ -56,7 +56,7 @@ def analyze_resume(resume_text, job_description=None):
     
     base_prompt = f"""
     You are an experienced HR with Technical Experience in the field of any one job role from Data Science, Data Analyst, DevOPS, Machine Learning Engineer, Prompt Engineer, AI Engineer, Full Stack Web Development, Big Data Engineering, Marketing Analyst, Human Resource Manager, Software Developer your task is to review the provided resume.
-    Please share your professional evaluation on whether the candidate's profile aligns with the role.ALso mention Skills he already have and siggest some skills to imorve his resume , alos suggest some course he might take to improve the skills.Highlight the strengths and weaknesses.
+    Please share your professional evaluation on whether the candidate's profile aligns with the role.Give ATS score for the resume. ALso mention Skills he already have and siggest some skills to imorve his resume , alos suggest some course he might take to improve the skills.Highlight the strengths and weaknesses.
 
     Resume:
     {resume_text}
@@ -121,4 +121,4 @@ if uploaded_file:
 
 #Footer
 st.markdown("---")
-st.markdown("""<p style= 'text-align: center;' >Powered by <b>Streamlit</b> and <b>Google Gemini AI</b> | Developed by <a href="https://www.linkedin.com/in/dutta-sujoy/"  target="_blank" style='text-decoration: none; color: #FFFFFF'><b>Sujoy Dutta</b></a></p>""", unsafe_allow_html=True)
+st.markdown("""<p style= 'text-align: center;' >Powered by <b>Streamlit</b> and <b>Google Gemini AI</b> | Developed by Afroze<a href="https://www.linkedin.com/in/dutta-sujoy/"  target="_blank" style='text-decoration: none; color: #FFFFFF'><b>Sujoy Dutta</b></a></p>""", unsafe_allow_html=True)
