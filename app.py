@@ -14,6 +14,12 @@ load_dotenv()
 genai.configure(
     api_key=os.getenv("GOOGLE_API_KEY") or st.secrets["GOOGLE_API_KEY"]
 )
+api_key = os.getenv("GOOGLE_API_KEY") or st.secrets.get("GOOGLE_API_Key")
+if not api_key:
+    raise ValueError("❌ GOOGLE_API_KEY not found in environment variables or Streamlit secrets")
+
+genai.configure(api_key=api_key)
+
 
 
 # Function to extract text from PDF
