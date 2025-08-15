@@ -123,7 +123,34 @@ if uploaded_file:
                 # Analyze resume
                 analysis = analyze_resume(resume_text, job_description)
                 st.success("Analysis complete!")
-                st.write(analysis)
+                import json
+
+                data = json.loads(analysis)  # Gemini output
+
+                st.subheader("📊 ATS Score")
+                st.progress(data["ATS_score"] / 100)
+                st.metric("ATS Score", f"{data['ATS_score']}%")
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.success("✅ Skills Present")
+                    st.write(", ".join(data["skills_present"]))
+                with col2:
+                    st.error("❌ Skills Missing")
+                    st.write(", ".join(data["skills_missing"]))
+                
+                st.subheader("💪 Strengths")
+                for s in data["strengths"]:
+                    st.markdown(f"- {s}")
+                
+                st.subheader("⚠️ Weaknesses")
+                for w in data["weaknesses"]:
+                    st.markdown(f"- {w}")
+                
+                st.subheader("📚 Recommended Courses")
+                for c in data["recommended_courses"]:
+                    st.markdown(f"- {c}")
+
             except Exception as e:
                 st.error(f"Analysis failed: {e}")
 
