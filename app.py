@@ -54,23 +54,24 @@ def analyze_resume(resume_text, job_description=None):
     
     model = genai.GenerativeModel("gemini-1.5-flash")
     
-    base_prompt = f"""You are an ATS system and career coach.
-        Analyze the following resume and job description.
-        
-        Respond ONLY with raw JSON.
-        Do not include any explanations, notes, markdown formatting, or text outside the JSON object.
-        
-        Keys to include:
-        - ATS_score (integer 0-100)
-        - skills_present (list of strings)
-        - skills_missing (list of strings)
-        - strengths (list of strings)
-        - weaknesses (list of strings)
-        - recommended_courses (list of strings)
-
+    base_prompt = f"""
+    You are a highly experienced HR professional with strong technical expertise in one or more of the following roles: 
+    Data Scientist, Data Analyst, DevOps Engineer, Machine Learning Engineer, Prompt Engineer, AI Engineer, Full Stack Developer, Big Data Engineer, Marketing Analyst, Human Resource Manager, or Software Developer.
     
-
+    Your task is to review the provided resume as if you are preparing a professional ATS and recruiter evaluation.
     
+    Provide your feedback in a clear, well-structured, and concise format covering the following sections:
+    
+    1. **ATS Score** (0–100)
+    2. **Skills Present** — List all relevant technical and soft skills already demonstrated in the resume.
+    3. **Skills to Improve/Add** — Suggest missing or underrepresented skills to enhance the candidate’s profile for the target role.
+    4. **Recommended Courses** — Suggest high-quality, role-relevant courses to strengthen those skills (include platform names if possible).
+    5. **Strengths** — Bullet points highlighting the candidate’s key advantages.
+    6. **Weaknesses / Areas for Improvement** — Bullet points highlighting gaps or limitations in the resume.
+    7. **Overall Fit** — Brief summary of how well the candidate matches the role and key recommendations for improvement.
+    
+    Be direct, insightful, and constructive. Think like the best career coach who understands both technical hiring needs and ATS optimization.
+
     Resume:
     {resume_text}
     """
@@ -91,16 +92,12 @@ def analyze_resume(resume_text, job_description=None):
     return analysis
 
 
-
-
-
-
-
+# Streamlit app
 
 st.set_page_config(page_title="Resume Analyzer", layout="wide")
 # Title
 st.title("AI Resume Analyzer")
-st.write("Analyze your resume and match it with job descriptions!")
+st.write("Analyze your resume and match it with job descriptions using Google Gemini AI.")
 
 col1 , col2 = st.columns(2)
 with col1:
@@ -128,37 +125,10 @@ if uploaded_file:
                 # Analyze resume
                 analysis = analyze_resume(resume_text, job_description)
                 st.success("Analysis complete!")
-                import json
-
-                data = json.loads(analysis)  # Gemini output
-
-                st.subheader("📊 ATS Score")
-                st.progress(data["ATS_score"] / 100)
-                st.metric("ATS Score", f"{data['ATS_score']}%")
-
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.success("✅ Skills Present")
-                    st.write(", ".join(data["skills_present"]))
-                with col2:
-                    st.error("❌ Skills Missing")
-                    st.write(", ".join(data["skills_missing"]))
-                
-                st.subheader("💪 Strengths")
-                for s in data["strengths"]:
-                    st.markdown(f"- {s}")
-                
-                st.subheader("⚠️ Weaknesses")
-                for w in data["weaknesses"]:
-                    st.markdown(f"- {w}")
-                
-                st.subheader("📚 Recommended Courses")
-                for c in data["recommended_courses"]:
-                    st.markdown(f"- {c}")
-
+                st.write(analysis)
             except Exception as e:
                 st.error(f"Analysis failed: {e}")
 
 #Footer
 st.markdown("---")
-st.markdown("""<p style= 'text-align: center;' >Powered by <b>Streamlit</b> and <b>Google Gemini AI</b> | Developed by Afroze<a href="https://www.linkedin.com/in/dutta-sujoy/"  target="_blank" style='text-decoration: none; color: #FFFFFF'><b>Sujoy Dutta</b></a></p>""", unsafe_allow_html=True)
+st.markdown("""<p style= 'text-align: center;' >Powered by <b>Streamlit</b> and <b>Google Gemini AI</b> | Developed by <a href="https://www.linkedin.com/in/dutta-sujoy/"  target="_blank" style='text-decoration: none; color: #FFFFFF'><b>Sujoy Dutta</b></a></p>""", unsafe_allow_html=True)
