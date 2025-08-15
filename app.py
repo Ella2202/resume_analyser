@@ -55,14 +55,18 @@ def analyze_resume(resume_text, job_description=None):
     model = genai.GenerativeModel("gemini-1.5-flash")
     
     base_prompt = f"""You are an ATS system and career coach. 
-    Analyze the following resume against the job description.
-    Return the output in JSON with these keys:
-    - ATS_score (0-100)
-    - skills_present (list)
-    - skills_missing (list)
-    - strengths (list)
-    - weaknesses (list)
-    - recommended_courses (list)
+        Analyze the following resume against the job description.
+        
+        Return ONLY valid JSON with these keys:
+        - ATS_score (0-100)
+        - skills_present (list)
+        - skills_missing (list)
+        - strengths (list)
+        - weaknesses (list)
+        - recommended_courses (list)
+        
+        Do not include any text outside the JSON. No explanations, no formatting, no markdown.
+
     
 
     
