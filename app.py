@@ -145,7 +145,7 @@ if uploaded_file:
     if st.button("Analyze Resume"):
         with st.spinner("Analyzing resume..."):
             try:
-                analysis = analyze_resume(resume_text, job_description)
+                analysis = analyze_resume(resume_text, job_description if job_description.strip() else None)
                 st.success("✅ Analysis complete!")
     
                 import re
