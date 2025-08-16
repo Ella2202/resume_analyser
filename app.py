@@ -206,127 +206,175 @@ if uploaded_file:
     # Extract text from PDF
     resume_text = extract_text_from_pdf("uploaded_resume.pdf")
 
-    if st.button("Analyze Resume"):
+    # Persist resume_text so it survives reruns
+    st.session_state['resume_text'] = resume_text
+
+    # If analysis exists in session state, use it; otherwise it will be None until user clicks Analyze
+    analysis = st.session_state.get('analysis')
+
+    # ANALYZE BUTTON: compute and store analysis in session_state (so it persists across reruns)
+    if st.button("Analyze Resume", key="analyze_btn"):
         with st.spinner("Analyzing resume..."):
             try:
                 analysis = analyze_resume(resume_text, job_description if job_description.strip() else None)
+                st.session_state['analysis'] = analysis  # persist
                 st.success("✅ Analysis complete!")
-    
-                import re
-    
-                # --- ATS Score ---
-                ats_match = re.search(r"ATS Score:\s*(\d+)", analysis)
-                ats_score = int(ats_match.group(1)) if ats_match else 0
-                st.markdown("### 📊 ATS Score")
-                st.progress(ats_score / 100)
-                color = "green" if ats_score >= 80 else "orange" if ats_score >= 60 else "red"
-                st.markdown(
-                    f"<h2 style='color:{color};text-align:center'>{ats_score}%</h2>",
-                    unsafe_allow_html=True
-                )
-    
-                # --- Skills Present ---
-                st.markdown("### ✅ Skills Present")
-                skills_present = re.findall(
-                    r"- (.+)", analysis.split("Skills Present:")[1].split("Skills to Improve")[0]
-                )
-                st.markdown(
-                    " ".join([
-                        f"<span style='background-color:#e0f7e9; padding:6px 10px; border-radius:20px; margin:4px; display:inline-block; font-size:14px'>{skill}</span>"
-                        for skill in skills_present
-                    ]),
-                    unsafe_allow_html=True
-                )
-    
-                # --- Skills Missing ---
-                st.markdown("### ❌ Skills Missing")
-                skills_missing = re.findall(
-                    r"- (.+)", analysis.split("Skills to Improve/Add:")[1].split("Recommended Courses")[0]
-                )
-                st.markdown(
-                    " ".join([
-                        f"<span style='background-color:#ffe0e0; padding:6px 10px; border-radius:20px; margin:4px; display:inline-block; font-size:14px'>{skill}</span>"
-                        for skill in skills_missing
-                    ]),
-                    unsafe_allow_html=True
-                )
-    
-                # --- Recommended Courses ---
-                st.markdown("### 📚 Recommended Courses")
-                courses = re.findall(
-                    r"- (.+)", analysis.split("Recommended Courses:")[1].split("Strengths")[0]
-                )
-                for c in courses:
-                    st.markdown(f"🎓 {c}")
-    
-                # --- Strengths & Weaknesses ---
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.markdown("### 💪 Strengths")
-                    strengths = re.findall(
-                        r"- (.+)", analysis.split("Strengths:")[1].split("Weaknesses")[0]
-                    )
-                    for s in strengths:
-                        st.markdown(
-                            f"<div style='background-color:#e8f5e9; padding:6px; border-radius:8px; margin-bottom:4px; font-size:14px'>🟢 {s}</div>",
-                            unsafe_allow_html=True
-                        )
-                with col2:
-                    st.markdown("### ⚠️ Weaknesses")
-                    weaknesses = re.findall(
-                        r"- (.+)", analysis.split("Weaknesses / Areas for Improvement:")[1].split("Overall Fit")[0]
-                    )
-                    for w in weaknesses:
-                        st.markdown(
-                            f"<div style='background-color:#ffebee; padding:6px; border-radius:8px; margin-bottom:4px; font-size:14px'>🔴 {w}</div>",
-                            unsafe_allow_html=True
-                        )
-    
-                
-                st.markdown("### 📌 Overall Fit")
-                overall_fit = analysis.split("Overall Fit:")[1].strip()
-                st.markdown(
-                    f"<div style='background-color:#fff3cd; padding:10px; border-radius:8px; font-style:italic; font-size:14px'>{overall_fit}</div>",
-                    unsafe_allow_html=True
-                )
-
-               
-                has_jd = bool(job_description and job_description.strip())
-                if not has_jd:
-                    st.info("Enter a job description to enable cover letter, interview questions, and skill-gap recommendations.")
-
-                gen_col1, gen_col2, gen_col3 = st.columns(3)
-                with gen_col1:
-                    if st.button("Generate Cover Letter", disabled=not has_jd):
-                        with st.spinner("Generating cover letter..."):
-                            try:
-                                cover_letter = generate_cover_letter(resume_text, job_description if has_jd else None)
-                                st.markdown("### 📝 Generated Cover Letter")
-                                st.text_area("Cover Letter", cover_letter, height=280)
-                            except Exception as e:
-                                st.error(f"Cover letter generation failed: {e}")
-                with gen_col2:
-                    if st.button("Generate Interview Questions", disabled=not has_jd):
-                        with st.spinner("Generating interview questions..."):
-                            try:
-                                questions = generate_interview_questions(resume_text, job_description if has_jd else None, count=8)
-                                st.markdown("### 🎤 Interview Questions")
-                                st.text_area("Interview Questions", questions, height=220)
-                            except Exception as e:
-                                st.error(f"Interview question generation failed: {e}")
-                with gen_col3:
-                    if st.button("Generate Skill Gap & Learning Path", disabled=not has_jd):
-                        with st.spinner("Analyzing skill gaps and generating learning path..."):
-                            try:
-                                skill_gap_path = generate_skill_gap_learning_path(resume_text, job_description if has_jd else None, top_n_courses=3)
-                                st.markdown("### 📚 Skill Gaps & Learning Path")
-                                st.text_area("Skill Gaps & Learning Path", skill_gap_path, height=300)
-                            except Exception as e:
-                                st.error(f"Skill gap generation failed: {e}")
-                # --- end new buttons ---
             except Exception as e:
                 st.error(f"Analysis failed: {e}")
+                analysis = None
+                st.session_state['analysis'] = None
 
+    # If analysis is present (either just computed or from previous run), render parsed UI
+    analysis = st.session_state.get('analysis')
+    if analysis:
+        import re
+
+        # --- ATS Score ---
+        ats_match = re.search(r"ATS Score:\s*(\d+)", analysis)
+        ats_score = int(ats_match.group(1)) if ats_match else 0
+        st.markdown("### 📊 ATS Score")
+        st.progress(ats_score / 100)
+        color = "green" if ats_score >= 80 else "orange" if ats_score >= 60 else "red"
+        st.markdown(
+            f"<h2 style='color:{color};text-align:center'>{ats_score}%</h2>",
+            unsafe_allow_html=True
+        )
+
+        # --- Skills Present ---
+        st.markdown("### ✅ Skills Present")
+        skills_present = []
+        try:
+            skills_present = re.findall(
+                r"- (.+)", analysis.split("Skills Present:")[1].split("Skills to Improve")[0]
+            )
+        except Exception:
+            skills_present = []
+        st.markdown(
+            " ".join([
+                f"<span style='background-color:#e0f7e9; padding:6px 10px; border-radius:20px; margin:4px; display:inline-block; font-size:14px'>{skill}</span>"
+                for skill in skills_present
+            ]),
+            unsafe_allow_html=True
+        )
+
+        # --- Skills Missing ---
+        st.markdown("### ❌ Skills Missing")
+        skills_missing = []
+        try:
+            skills_missing = re.findall(
+                r"- (.+)", analysis.split("Skills to Improve/Add:")[1].split("Recommended Courses")[0]
+            )
+        except Exception:
+            skills_missing = []
+        st.markdown(
+            " ".join([
+                f"<span style='background-color:#ffe0e0; padding:6px 10px; border-radius:20px; margin:4px; display:inline-block; font-size:14px'>{skill}</span>"
+                for skill in skills_missing
+            ]),
+            unsafe_allow_html=True
+        )
+
+        # --- Recommended Courses ---
+        st.markdown("### 📚 Recommended Courses")
+        courses = []
+        try:
+            courses = re.findall(
+                r"- (.+)", analysis.split("Recommended Courses:")[1].split("Strengths")[0]
+            )
+        except Exception:
+            courses = []
+        for c in courses:
+            st.markdown(f"🎓 {c}")
+
+        # --- Strengths & Weaknesses ---
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("### 💪 Strengths")
+            strengths = []
+            try:
+                strengths = re.findall(
+                    r"- (.+)", analysis.split("Strengths:")[1].split("Weaknesses")[0]
+                )
+            except Exception:
+                strengths = []
+            for s in strengths:
+                st.markdown(
+                    f"<div style='background-color:#e8f5e9; padding:6px; border-radius:8px; margin-bottom:4px; font-size:14px'>🟢 {s}</div>",
+                    unsafe_allow_html=True
+                )
+        with col2:
+            st.markdown("### ⚠️ Weaknesses")
+            weaknesses = []
+            try:
+                weaknesses = re.findall(
+                    r"- (.+)", analysis.split("Weaknesses / Areas for Improvement:")[1].split("Overall Fit")[0]
+                )
+            except Exception:
+                weaknesses = []
+            for w in weaknesses:
+                st.markdown(
+                    f"<div style='background-color:#ffebee; padding:6px; border-radius:8px; margin-bottom:4px; font-size:14px'>🔴 {w}</div>",
+                    unsafe_allow_html=True
+                )
+
+        # --- Overall Fit ---
+        st.markdown("### 📌 Overall Fit")
+        overall_fit = ""
+        try:
+            overall_fit = analysis.split("Overall Fit:")[1].strip()
+        except Exception:
+            overall_fit = analysis
+        st.markdown(
+            f"<div style='background-color:#fff3cd; padding:10px; border-radius:8px; font-style:italic; font-size:14px'>{overall_fit}</div>",
+            unsafe_allow_html=True
+        )
+
+        # --- NEW: Buttons for generative features (Cover Letter, Interview Qs, Skill Gap & Learning Path) ---
+        has_jd = bool(job_description and job_description.strip())
+        if not has_jd:
+            st.info("Enter a job description to enable cover letter, interview questions, and skill-gap recommendations.")
+
+        gen_col1, gen_col2, gen_col3 = st.columns(3)
+        with gen_col1:
+            # generate cover letter (store in session_state so it persists)
+            if st.button("Generate Cover Letter", key="gen_cover", disabled=not has_jd):
+                with st.spinner("Generating cover letter..."):
+                    try:
+                        cover_letter = generate_cover_letter(st.session_state['resume_text'], job_description if has_jd else None)
+                        st.session_state['cover_letter'] = cover_letter
+                    except Exception as e:
+                        st.error(f"Cover letter generation failed: {e}")
+            # show cover letter if previously generated
+            if st.session_state.get('cover_letter'):
+                st.markdown("### 📝 Generated Cover Letter")
+                st.text_area("Cover Letter", st.session_state.get('cover_letter'), height=280)
+
+        with gen_col2:
+            if st.button("Generate Interview Questions", key="gen_qs", disabled=not has_jd):
+                with st.spinner("Generating interview questions..."):
+                    try:
+                        questions = generate_interview_questions(st.session_state['resume_text'], job_description if has_jd else None, count=8)
+                        st.session_state['interview_questions'] = questions
+                    except Exception as e:
+                        st.error(f"Interview question generation failed: {e}")
+            if st.session_state.get('interview_questions'):
+                st.markdown("### 🎤 Interview Questions")
+                st.text_area("Interview Questions", st.session_state.get('interview_questions'), height=220)
+
+        with gen_col3:
+            if st.button("Generate Skill Gap & Learning Path", key="gen_skill", disabled=not has_jd):
+                with st.spinner("Analyzing skill gaps and generating learning path..."):
+                    try:
+                        skill_gap_path = generate_skill_gap_learning_path(st.session_state['resume_text'], job_description if has_jd else None, top_n_courses=3)
+                        st.session_state['skill_gap_path'] = skill_gap_path
+                    except Exception as e:
+                        st.error(f"Skill gap generation failed: {e}")
+            if st.session_state.get('skill_gap_path'):
+                st.markdown("### 📚 Skill Gaps & Learning Path")
+                st.text_area("Skill Gaps & Learning Path", st.session_state.get('skill_gap_path'), height=300)
+        # --- end new buttons ---
+    # end if analysis
+# end if uploaded_file
 
 
 #Footer
