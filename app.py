@@ -115,6 +115,70 @@ def analyze_resume(resume_text, job_description=None):
     return analysis
 
 
+# --- NEW: Generative features (cover letter, interview Qs, skill gap + learning path) ---
+def generate_cover_letter(resume_text, job_description=None):
+    """Generate a tailored cover letter using Gemini."""
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    prompt = f"""
+    You are an expert HR professional and professional writer. 
+    Create a concise, persuasive cover letter (about 3-5 short paragraphs, ~200-300 words) tailored to the candidate described in the resume below.
+    Make the tone professional and impactful, emphasizing key achievements and fit for the role.
+    
+    Resume:
+    {resume_text}
+    """
+    if job_description:
+        prompt += f"\nTarget Job Description:\n{job_description}\nPlease tailor the letter specifically to the job description."
+    # Ask for a short sign-off
+    prompt += "\nEnd with a short, professional closing and a call to action."
+
+    response = model.generate_content(prompt)
+    return response.text.strip()
+
+
+def generate_interview_questions(resume_text, job_description=None, count=8):
+    """Generate role-specific interview questions based on resume and optional job description."""
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    prompt = f"""
+    You are an experienced hiring manager and interviewer.
+    Based on the resume below, generate {count} interview prompts/questions that assess:
+    - technical skills and knowledge,
+    - problem-solving / work examples,
+    - behavioural fit.
+    Provide questions as a numbered list. Keep them focused and role-relevant.
+    
+    Resume:
+    {resume_text}
+    """
+    if job_description:
+        prompt += f"\nJob Description:\n{job_description}\nPrioritize questions relevant to this job."
+
+    response = model.generate_content(prompt)
+    return response.text.strip()
+
+
+def generate_skill_gap_learning_path(resume_text, job_description=None, top_n_courses=3):
+    """Identify skill gaps and propose a concise learning path with recommended resources."""
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    prompt = f"""
+    You are a career coach and technical instructor.
+    1) Identify up to 5 key skill gaps relative to the resume (and to the job description if provided).
+    2) For each gap, give a 1-2 sentence explanation why it matters.
+    3) For each gap, recommend a short, actionable learning path (3 steps max) and up to {top_n_courses} recommended courses or resources (name + platform).
+    
+    Output clearly with headings: Skill Gap, Why it matters, Learning Path, Recommended Resources.
+    
+    Resume:
+    {resume_text}
+    """
+    if job_description:
+        prompt += f"\nJob Description:\n{job_description}\nFocus recommendations toward this job."
+
+    response = model.generate_content(prompt)
+    return response.text.strip()
+# --- END NEW FUNCTIONS ---
+
+
 # Streamlit app
 
 st.set_page_config(page_title="Resume Analyzer", layout="wide")
@@ -218,14 +282,48 @@ if uploaded_file:
                             unsafe_allow_html=True
                         )
     
-                # --- Overall Fit ---
+                
                 st.markdown("### 📌 Overall Fit")
                 overall_fit = analysis.split("Overall Fit:")[1].strip()
                 st.markdown(
                     f"<div style='background-color:#fff3cd; padding:10px; border-radius:8px; font-style:italic; font-size:14px'>{overall_fit}</div>",
                     unsafe_allow_html=True
                 )
-    
+
+               
+                has_jd = bool(job_description and job_description.strip())
+                if not has_jd:
+                    st.info("Enter a job description to enable cover letter, interview questions, and skill-gap recommendations.")
+
+                gen_col1, gen_col2, gen_col3 = st.columns(3)
+                with gen_col1:
+                    if st.button("Generate Cover Letter", disabled=not has_jd):
+                        with st.spinner("Generating cover letter..."):
+                            try:
+                                cover_letter = generate_cover_letter(resume_text, job_description if has_jd else None)
+                                st.markdown("### 📝 Generated Cover Letter")
+                                st.text_area("Cover Letter", cover_letter, height=280)
+                            except Exception as e:
+                                st.error(f"Cover letter generation failed: {e}")
+                with gen_col2:
+                    if st.button("Generate Interview Questions", disabled=not has_jd):
+                        with st.spinner("Generating interview questions..."):
+                            try:
+                                questions = generate_interview_questions(resume_text, job_description if has_jd else None, count=8)
+                                st.markdown("### 🎤 Interview Questions")
+                                st.text_area("Interview Questions", questions, height=220)
+                            except Exception as e:
+                                st.error(f"Interview question generation failed: {e}")
+                with gen_col3:
+                    if st.button("Generate Skill Gap & Learning Path", disabled=not has_jd):
+                        with st.spinner("Analyzing skill gaps and generating learning path..."):
+                            try:
+                                skill_gap_path = generate_skill_gap_learning_path(resume_text, job_description if has_jd else None, top_n_courses=3)
+                                st.markdown("### 📚 Skill Gaps & Learning Path")
+                                st.text_area("Skill Gaps & Learning Path", skill_gap_path, height=300)
+                            except Exception as e:
+                                st.error(f"Skill gap generation failed: {e}")
+                # --- end new buttons ---
             except Exception as e:
                 st.error(f"Analysis failed: {e}")
 
