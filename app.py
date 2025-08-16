@@ -148,46 +148,87 @@ if uploaded_file:
                 analysis = analyze_resume(resume_text, job_description)
                 st.success("✅ Analysis complete!")
     
-                # Parse ATS score
                 import re
+    
+                # --- ATS Score ---
                 ats_match = re.search(r"ATS Score:\s*(\d+)", analysis)
                 ats_score = int(ats_match.group(1)) if ats_match else 0
-    
-                # ATS Score Display
-                st.subheader("📊 ATS Score")
+                st.markdown("### 📊 ATS Score")
                 st.progress(ats_score / 100)
-                st.markdown(f"<h2 style='color: {'green' if ats_score >= 80 else 'orange' if ats_score >= 60 else 'red'}'>{ats_score}%</h2>", unsafe_allow_html=True)
+                color = "green" if ats_score >= 80 else "orange" if ats_score >= 60 else "red"
+                st.markdown(
+                    f"<h2 style='color:{color};text-align:center'>{ats_score}%</h2>",
+                    unsafe_allow_html=True
+                )
     
-                # Skills Present
-                st.subheader("✅ Skills Present")
-                skills_present = re.findall(r"- (.+)", analysis.split("Skills Present:")[1].split("Skills to Improve")[0])
-                st.markdown(" ".join([f"<span style='background-color:#e0f7e9; padding:4px 8px; border-radius:5px; margin:3px; display:inline-block'>{skill}</span>" for skill in skills_present]), unsafe_allow_html=True)
+                # --- Skills Present ---
+                st.markdown("### ✅ Skills Present")
+                skills_present = re.findall(
+                    r"- (.+)", analysis.split("Skills Present:")[1].split("Skills to Improve")[0]
+                )
+                st.markdown(
+                    " ".join([
+                        f"<span style='background-color:#e0f7e9; padding:6px 10px; border-radius:20px; margin:4px; display:inline-block; font-size:14px'>{skill}</span>"
+                        for skill in skills_present
+                    ]),
+                    unsafe_allow_html=True
+                )
     
-                # Skills Missing
-                st.subheader("❌ Skills Missing")
-                skills_missing = re.findall(r"- (.+)", analysis.split("Skills to Improve/Add:")[1].split("Recommended Courses")[0])
-                st.markdown(" ".join([f"<span style='background-color:#ffe0e0; padding:4px 8px; border-radius:5px; margin:3px; display:inline-block'>{skill}</span>" for skill in skills_missing]), unsafe_allow_html=True)
+                # --- Skills Missing ---
+                st.markdown("### ❌ Skills Missing")
+                skills_missing = re.findall(
+                    r"- (.+)", analysis.split("Skills to Improve/Add:")[1].split("Recommended Courses")[0]
+                )
+                st.markdown(
+                    " ".join([
+                        f"<span style='background-color:#ffe0e0; padding:6px 10px; border-radius:20px; margin:4px; display:inline-block; font-size:14px'>{skill}</span>"
+                        for skill in skills_missing
+                    ]),
+                    unsafe_allow_html=True
+                )
     
-                # Strengths & Weaknesses
+                # --- Recommended Courses ---
+                st.markdown("### 📚 Recommended Courses")
+                courses = re.findall(
+                    r"- (.+)", analysis.split("Recommended Courses:")[1].split("Strengths")[0]
+                )
+                for c in courses:
+                    st.markdown(f"🎓 {c}")
+    
+                # --- Strengths & Weaknesses ---
                 col1, col2 = st.columns(2)
                 with col1:
-                    st.markdown("**💪 Strengths**")
-                    strengths = re.findall(r"- (.+)", analysis.split("Strengths:")[1].split("Weaknesses")[0])
+                    st.markdown("### 💪 Strengths")
+                    strengths = re.findall(
+                        r"- (.+)", analysis.split("Strengths:")[1].split("Weaknesses")[0]
+                    )
                     for s in strengths:
-                        st.markdown(f"✅ {s}")
+                        st.markdown(
+                            f"<div style='background-color:#e8f5e9; padding:6px; border-radius:8px; margin-bottom:4px; font-size:14px'>🟢 {s}</div>",
+                            unsafe_allow_html=True
+                        )
                 with col2:
-                    st.markdown("**⚠️ Weaknesses**")
-                    weaknesses = re.findall(r"- (.+)", analysis.split("Weaknesses / Areas for Improvement:")[1].split("Overall Fit")[0])
+                    st.markdown("### ⚠️ Weaknesses")
+                    weaknesses = re.findall(
+                        r"- (.+)", analysis.split("Weaknesses / Areas for Improvement:")[1].split("Overall Fit")[0]
+                    )
                     for w in weaknesses:
-                        st.markdown(f"❌ {w}")
+                        st.markdown(
+                            f"<div style='background-color:#ffebee; padding:6px; border-radius:8px; margin-bottom:4px; font-size:14px'>🔴 {w}</div>",
+                            unsafe_allow_html=True
+                        )
     
-                # Overall Fit
-                st.subheader("📌 Overall Fit")
+                # --- Overall Fit ---
+                st.markdown("### 📌 Overall Fit")
                 overall_fit = analysis.split("Overall Fit:")[1].strip()
-                st.info(overall_fit)
+                st.markdown(
+                    f"<div style='background-color:#fff3cd; padding:10px; border-radius:8px; font-style:italic; font-size:14px'>{overall_fit}</div>",
+                    unsafe_allow_html=True
+                )
     
             except Exception as e:
                 st.error(f"Analysis failed: {e}")
+
 
 
 #Footer
